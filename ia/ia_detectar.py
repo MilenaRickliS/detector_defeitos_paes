@@ -1,3 +1,5 @@
+#uvicorn ia_detectar:app --reload --host 0.0.0.0
+
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -15,7 +17,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-model = YOLO("runs/detect/train3/weights/best.pt")  
+model = YOLO("runs/detect/train2/weights/best.pt")  
 
 @app.post("/detect")
 async def detect_defects(image: UploadFile = File(...)):
@@ -32,7 +34,8 @@ async def detect_defects(image: UploadFile = File(...)):
             "y": y1,
             "width": x2 - x1,
             "height": y2 - y1,
-            "label": results.names[int(class_id)]
+            "label": results.names[int(class_id)],
+            "confidence": round(score * 100, 1) 
         })
 
     return JSONResponse(content=boxes)
