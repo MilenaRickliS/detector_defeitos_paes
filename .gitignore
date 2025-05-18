@@ -43,4 +43,4 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
-C:\Users\Usuario\Documents\FACULDADE\6P\OPTATIVA\detector_defeitos_paes\detector_defeitos_paes\ia\yolov8-tflite-env
+ia/yolov8-tflite-env/
