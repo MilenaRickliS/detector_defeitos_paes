@@ -1,0 +1,12 @@
+path: C:\Users\Usuario\Documents\FACULDADE\6P\OPTATIVA\detector_defeitos_paes\detector_defeitos_paes\ia\dataset
+train: images/train
+val: images/val
+
+names:
+  0: queimado
+  1: amassado
+  2: buraco
+  3: contaminado
+  4: mofo
+  5: rachadura
+  6: normal
