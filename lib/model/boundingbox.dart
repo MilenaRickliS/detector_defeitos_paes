@@ -4,6 +4,7 @@ class BoundingBox {
   final double width;
   final double height;
   final String label;
+  final double confidence;
 
   BoundingBox({
     required this.x,
@@ -11,6 +12,7 @@ class BoundingBox {
     required this.width,
     required this.height,
     required this.label,
+    required this.confidence,
   });
 
   factory BoundingBox.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,7 @@ class BoundingBox {
       width: (json['width'] as num).toDouble(),
       height: (json['height'] as num).toDouble(),
       label: json['label'] ?? '',
+      confidence: (json['confidence'] as num?)?.toDouble() ?? 0.0,
     );
   }
 }

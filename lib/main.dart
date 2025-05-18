@@ -12,9 +12,20 @@ class MyApp extends StatelessWidget {
   const MyApp({super.key});
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       home: DetectorPage(),
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+          fontFamily: 'Roboto',
+          scaffoldBackgroundColor: const Color(0xFFF8F9FA),
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Color(0xFF6D4C41),
+            elevation: 4,
+          ),
+          floatingActionButtonTheme: const FloatingActionButtonThemeData(
+            backgroundColor: Color(0xFF6D4C41),
+          ),
+        ),
       );
   }
 }
@@ -72,10 +83,30 @@ class DetectorPageState extends State<DetectorPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Detector de Defeitos em Pães')),
+      backgroundColor: const Color(0xFFF8F9FA), 
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF6D4C41), 
+        elevation: 4,
+        leading: const Icon(Icons.bakery_dining, color: Colors.white),
+        title: const Text(
+          'Detector de Defeitos em Pães',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
+        centerTitle: true,
+      ),
       body: Center(
         child: _imageFile == null
-            ? const Text('Tire uma foto para detectar defeitos em pães')
+            ? const Text(
+              'Tire uma foto para detectar defeitos em pães',
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.black87,
+              ),
+            )
             : InteractiveViewer(
                 panEnabled: true,
                 scaleEnabled: true,
@@ -94,8 +125,9 @@ class DetectorPageState extends State<DetectorPage> {
       ),
 
       floatingActionButton: FloatingActionButton(
+        backgroundColor: const Color(0xFF6D4C41),
         onPressed: _pickImage,
-        child: const Icon(Icons.camera_alt),
+        child: const Icon(Icons.camera_alt, color: Colors.white),
       ),
     );
   }
@@ -108,27 +140,40 @@ class ImagePainter extends CustomPainter {
 
   ImagePainter(this.image, this.boxes);
 
+  final Map<String, Color> labelColors = {
+    'amassado': Colors.orange,
+    'buraco': Colors.blue,
+    'contaminado': Colors.black,
+    'mofo': Colors.green,
+    'normal': Colors.white,
+    'queimado': Colors.brown,
+    'rachadura': Colors.purple,
+  };
+
   @override
   void paint(Canvas canvas, Size size) {
     paintImage(canvas: canvas, rect: Offset.zero & size, image: image, fit: BoxFit.contain);
 
-    final paintBox = Paint()
-      ..color = Colors.red.withOpacity(0.7)
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke;
-
-    final paintLabelBg = Paint()
-      ..color = Colors.red.withOpacity(0.6)
-      ..style = PaintingStyle.fill;
-
     for (var box in boxes) {
+      final color = labelColors[box.label.toLowerCase()] ?? Colors.red;
+
+      final paintBox = Paint()
+        ..color = color.withAlpha(230)
+        ..strokeWidth = 3
+        ..style = PaintingStyle.stroke;
+
+      final paintLabelBg = Paint()
+        ..color = color.withAlpha(230)
+        ..style = PaintingStyle.fill;
+
       final rect = Rect.fromLTWH(box.x, box.y, box.width, box.height);
       canvas.drawRect(rect, paintBox);
 
       final textSpan = TextSpan(
-        text: box.label,
+        text: '${box.label} (${box.confidence.toStringAsFixed(1)}%)',
         style: const TextStyle(color: Colors.white, fontSize: 16),
       );
+
       final tp = TextPainter(text: textSpan, textDirection: TextDirection.ltr);
       tp.layout();
 
