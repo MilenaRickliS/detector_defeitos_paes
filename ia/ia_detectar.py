@@ -17,7 +17,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-model = YOLO("runs/detect/train2/weights/best.pt")  
+model = YOLO("runs/detect/train/weights/best.pt")  
 
 @app.post("/detect")
 async def detect_defects(image: UploadFile = File(...)):
