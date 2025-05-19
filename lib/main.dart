@@ -76,7 +76,7 @@ class DetectorPageState extends State<DetectorPage> {
         _boxes = (jsonResp as List).map((e) => BoundingBox.fromJson(e)).toList();
       });
     } else {
-      print('Erro na API: ${response.statusCode}');
+      'Erro na API: ${response.statusCode}';
     }
   }
 
@@ -141,13 +141,13 @@ class ImagePainter extends CustomPainter {
   ImagePainter(this.image, this.boxes);
 
   final Map<String, Color> labelColors = {
-    'amassado': Colors.orange,
+    
     'buraco': Colors.blue,
-    'contaminado': Colors.black,
-    'mofo': Colors.green,
-    'normal': Colors.white,
-    'queimado': Colors.brown,
-    'rachadura': Colors.purple,
+    'contaminado': const Color.fromARGB(255, 83, 1, 104),
+    'mofo': const Color.fromARGB(255, 175, 76, 170),
+    'pao': const Color.fromARGB(255, 72, 158, 1),
+    'queimado': const Color.fromARGB(255, 133, 38, 4),
+    
   };
 
   @override

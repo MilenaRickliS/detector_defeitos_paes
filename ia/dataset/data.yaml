@@ -3,10 +3,9 @@ train: images/train
 val: images/val
 
 names:
-  0: amassado
-  1: buraco
-  2: contaminado
-  3: mofo
-  4: normal
-  5: queimado
-  6: rachadura
+  0: buraco
+  1: contaminado
+  2: mofo
+  3: pao
+  4: queimado
+
