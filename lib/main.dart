@@ -47,7 +47,7 @@ class DetectorPageState extends State<DetectorPage> {
     final picked = await _picker.pickImage(source: ImageSource.camera);
     if (picked == null) return;
 
-    // Corrige a rotação da imagem
+    
     final rotatedFile = await FlutterExifRotation.rotateImage(path: picked.path);
     _imageFile = rotatedFile;
     _boxes = [];
@@ -67,7 +67,7 @@ class DetectorPageState extends State<DetectorPage> {
   Future<void> _sendImageToAPI(File imageFile) async {
     var request = http.MultipartRequest(
       'POST',
-      Uri.parse('http://192.168.0.7:8000/detect'), // Altere se necessário
+      Uri.parse('http://192.168.0.7:8000/detect'), 
     );
     request.files.add(await http.MultipartFile.fromPath('image', imageFile.path));
     var response = await request.send();
@@ -145,10 +145,10 @@ class ImagePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Desenha a imagem
+    
     paintImage(canvas: canvas, rect: Offset.zero & size, image: image, fit: BoxFit.contain);
 
-    // Proporção da imagem para canvas
+    
     final scaleX = size.width / image.width;
     final scaleY = size.height / image.height;
 
