@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
+import 'package:flutter_exif_rotation/flutter_exif_rotation.dart';
 
 void main() => runApp(const MyApp());
 
@@ -13,20 +14,20 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: DetectorPage(),
+      home: const DetectorPage(),
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-          fontFamily: 'Roboto',
-          scaffoldBackgroundColor: const Color(0xFFF8F9FA),
-          appBarTheme: const AppBarTheme(
-            backgroundColor: Color(0xFF6D4C41),
-            elevation: 4,
-          ),
-          floatingActionButtonTheme: const FloatingActionButtonThemeData(
-            backgroundColor: Color(0xFF6D4C41),
-          ),
+        fontFamily: 'Roboto',
+        scaffoldBackgroundColor: const Color(0xFFF8F9FA),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF6D4C41),
+          elevation: 4,
         ),
-      );
+        floatingActionButtonTheme: const FloatingActionButtonThemeData(
+          backgroundColor: Color(0xFF6D4C41),
+        ),
+      ),
+    );
   }
 }
 
@@ -46,7 +47,9 @@ class DetectorPageState extends State<DetectorPage> {
     final picked = await _picker.pickImage(source: ImageSource.camera);
     if (picked == null) return;
 
-    _imageFile = File(picked.path);
+    // Corrige a rotação da imagem
+    final rotatedFile = await FlutterExifRotation.rotateImage(path: picked.path);
+    _imageFile = rotatedFile;
     _boxes = [];
     _uiImage = await loadUiImage(_imageFile!);
 
@@ -64,7 +67,7 @@ class DetectorPageState extends State<DetectorPage> {
   Future<void> _sendImageToAPI(File imageFile) async {
     var request = http.MultipartRequest(
       'POST',
-      Uri.parse('http://192.168.0.7:8000/detect'), 
+      Uri.parse('http://192.168.0.7:8000/detect'), // Altere se necessário
     );
     request.files.add(await http.MultipartFile.fromPath('image', imageFile.path));
     var response = await request.send();
@@ -76,17 +79,15 @@ class DetectorPageState extends State<DetectorPage> {
         _boxes = (jsonResp as List).map((e) => BoundingBox.fromJson(e)).toList();
       });
     } else {
-      'Erro na API: ${response.statusCode}';
+      print('Erro na API: ${response.statusCode}');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA), 
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF6D4C41), 
-        elevation: 4,
         leading: const Icon(Icons.bakery_dining, color: Colors.white),
         title: const Text(
           'Detector de Defeitos em Pães',
@@ -101,12 +102,9 @@ class DetectorPageState extends State<DetectorPage> {
       body: Center(
         child: _imageFile == null
             ? const Text(
-              'Tire uma foto para detectar defeitos em pães',
-              style: TextStyle(
-                fontSize: 18,
-                color: Colors.black87,
-              ),
-            )
+                'Tire uma foto para detectar defeitos em pães',
+                style: TextStyle(fontSize: 18, color: Colors.black87),
+              )
             : InteractiveViewer(
                 panEnabled: true,
                 scaleEnabled: true,
@@ -123,16 +121,13 @@ class DetectorPageState extends State<DetectorPage> {
                 ),
               ),
       ),
-
       floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF6D4C41),
         onPressed: _pickImage,
         child: const Icon(Icons.camera_alt, color: Colors.white),
       ),
     );
   }
 }
-
 
 class ImagePainter extends CustomPainter {
   final ui.Image image;
@@ -141,18 +136,21 @@ class ImagePainter extends CustomPainter {
   ImagePainter(this.image, this.boxes);
 
   final Map<String, Color> labelColors = {
-    
     'buraco': Colors.blue,
     'contaminado': const Color.fromARGB(255, 83, 1, 104),
     'mofo': const Color.fromARGB(255, 175, 76, 170),
     'pao': const Color.fromARGB(255, 72, 158, 1),
     'queimado': const Color.fromARGB(255, 133, 38, 4),
-    
   };
 
   @override
   void paint(Canvas canvas, Size size) {
+    // Desenha a imagem
     paintImage(canvas: canvas, rect: Offset.zero & size, image: image, fit: BoxFit.contain);
+
+    // Proporção da imagem para canvas
+    final scaleX = size.width / image.width;
+    final scaleY = size.height / image.height;
 
     for (var box in boxes) {
       final color = labelColors[box.label.toLowerCase()] ?? Colors.red;
@@ -166,7 +164,12 @@ class ImagePainter extends CustomPainter {
         ..color = color.withAlpha(230)
         ..style = PaintingStyle.fill;
 
-      final rect = Rect.fromLTWH(box.x, box.y, box.width, box.height);
+      final left = box.x * scaleX;
+      final top = box.y * scaleY;
+      final width = box.width * scaleX;
+      final height = box.height * scaleY;
+
+      final rect = Rect.fromLTWH(left, top, width, height);
       canvas.drawRect(rect, paintBox);
 
       final textSpan = TextSpan(
@@ -177,9 +180,9 @@ class ImagePainter extends CustomPainter {
       final tp = TextPainter(text: textSpan, textDirection: TextDirection.ltr);
       tp.layout();
 
-      final labelRect = Rect.fromLTWH(box.x, box.y - tp.height, tp.width + 6, tp.height);
+      final labelRect = Rect.fromLTWH(left, top - tp.height, tp.width + 6, tp.height);
       canvas.drawRect(labelRect, paintLabelBg);
-      tp.paint(canvas, Offset(box.x + 3, box.y - tp.height));
+      tp.paint(canvas, Offset(left + 3, top - tp.height));
     }
   }
 
