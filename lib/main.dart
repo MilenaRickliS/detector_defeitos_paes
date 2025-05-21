@@ -67,7 +67,7 @@ class DetectorPageState extends State<DetectorPage> {
   Future<void> _sendImageToAPI(File imageFile) async {
     var request = http.MultipartRequest(
       'POST',
-      Uri.parse('http://192.168.0.7:8000/detect'), 
+      Uri.parse('http://192.168.0.5:8000/detect'), 
     );
     request.files.add(await http.MultipartFile.fromPath('image', imageFile.path));
     var response = await request.send();
