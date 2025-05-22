@@ -7,7 +7,7 @@ Este projeto utiliza **YOLOv8**, **FastAPI** e **Flutter** para detectar defeito
 
 ## 🔍 Funcionalidades
 
-- 📷 Tirar foto de um pão pelo app Flutter
+- 📷 Tirar foto de um pão ou buscar na galeria pelo app Flutter
 - 🧠 Enviar a imagem para uma API com modelo YOLOv8 treinado
 - 📦 Detectar e classificar defeitos como:
   - buraco
@@ -24,7 +24,7 @@ Este projeto utiliza **YOLOv8**, **FastAPI** e **Flutter** para detectar defeito
 O modelo YOLOv8 foi treinado usando imagens anotadas de pães com defeitos. Ele é carregado na API com o caminho:
 
 ```python
-model = YOLO("runs/detect/defeitos_paes_v2/weights/best.pt")
+model = YOLO("runs/detect/defeitos_paes_v3/weights/best.pt")
 ```
 
 Cada classe possui um **limiar mínimo de confiança personalizada** para reduzir falsos positivos:
@@ -35,9 +35,7 @@ class_thresholds = {
   "buraco": 0.3,
   "contaminado": 0.3,
   "queimado": 0.4,
-  "amassado": 0.4,
   "mofo": 0.4,
-  "rachadura": 0.4,
 }
 ```
 
@@ -70,15 +68,13 @@ pip install -r requirements.txt
 uvicorn ia_detectar:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Acesse a documentação Swagger: [http://localhost:8000/docs](http://localhost:8000/docs)
-
 ---
 
 ## 📲 Aplicativo Flutter
 
 O app Flutter permite:
 
-- Capturar uma imagem com a câmera
+- Capturar uma imagem com a câmera ou escolher imagem da galeria
 - Corrigir orientação da imagem
 - Enviar a imagem para a API `/detect`
 - Exibir a imagem com bounding boxes e lista de defeitos detectados
@@ -92,6 +88,19 @@ dependencies:
   image_picker: ^1.1.2
   http: ^1.4.0
   flutter_exif_rotation: ^0.5.2
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_launcher_icons: ^0.14.3
+  flutter_native_splash: ^2.4.6
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/icons/
 ```
 
 ---
@@ -100,8 +109,9 @@ dependencies:
 
 ```
 detector_defeitos_paes/
-├── ia_detectar.py                   # API FastAPI com YOLOv8
-├── runs/detect/defeitos_paes_v2/    # Pesos do modelo YOLOv8 (.pt)
+├── ia/ia_detectar.py                # API FastAPI com YOLOv8
+├── ia/dataset                       # Pasta com imagens e labels
+├── runs/detect/defeitos_paes_v3/    # Pesos do modelo YOLOv8 (.pt)
 ├── assets/icons/                    # Ícone do app Flutter
 └── lib/                             # Código Flutter
 ```
