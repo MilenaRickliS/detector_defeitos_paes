@@ -44,10 +44,39 @@ class DetectorPageState extends State<DetectorPage> {
   final ImagePicker _picker = ImagePicker();
 
   Future<void> _pickImage() async {
-    final picked = await _picker.pickImage(source: ImageSource.camera);
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Tirar foto'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _getImage(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Escolher da galeria'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _getImage(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _getImage(ImageSource source) async {
+    final picked = await _picker.pickImage(source: source);
     if (picked == null) return;
 
-    
     final rotatedFile = await FlutterExifRotation.rotateImage(path: picked.path);
     _imageFile = rotatedFile;
     _boxes = [];
@@ -57,6 +86,7 @@ class DetectorPageState extends State<DetectorPage> {
     await _sendImageToAPI(_imageFile!);
   }
 
+
   Future<ui.Image> loadUiImage(File file) async {
     final data = await file.readAsBytes();
     final codec = await ui.instantiateImageCodec(data);
@@ -65,23 +95,34 @@ class DetectorPageState extends State<DetectorPage> {
   }
 
   Future<void> _sendImageToAPI(File imageFile) async {
-    var request = http.MultipartRequest(
-      'POST',
-      Uri.parse('http://192.168.0.5:8000/detect'), 
-    );
-    request.files.add(await http.MultipartFile.fromPath('image', imageFile.path));
-    var response = await request.send();
+    try {
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('http://192.168.0.5:8000/detect'),
+      );
+      request.files.add(await http.MultipartFile.fromPath('image', imageFile.path));
+      var response = await request.send();
 
-    if (response.statusCode == 200) {
-      var respStr = await response.stream.bytesToString();
-      var jsonResp = json.decode(respStr);
-      setState(() {
-        _boxes = (jsonResp as List).map((e) => BoundingBox.fromJson(e)).toList();
-      });
-    } else {
-      print('Erro na API: ${response.statusCode}');
+      if (response.statusCode == 200) {
+        var respStr = await response.stream.bytesToString();
+        var jsonResp = json.decode(respStr);
+        setState(() {
+          _boxes = (jsonResp as List).map((e) => BoundingBox.fromJson(e)).toList();
+        });
+      } else {
+        _showError('Erro ${response.statusCode}: falha ao processar imagem.');
+      }
+    } catch (e) {
+      _showError('Erro de conexão com a API.\nDetalhes: $e');
     }
   }
+
+void _showError(String message) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text(message), backgroundColor: Colors.red),
+  );
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -99,32 +140,62 @@ class DetectorPageState extends State<DetectorPage> {
         ),
         centerTitle: true,
       ),
-      body: Center(
-        child: _imageFile == null
-            ? const Text(
-                'Tire uma foto para detectar defeitos em pães',
+      body: _imageFile == null
+        ? const Center(
+            child: Padding(
+              padding: EdgeInsets.all(16.0), 
+              child: Text(
+                'Tire uma foto ou selecione da galeria para detectar defeitos em pães',
                 style: TextStyle(fontSize: 18, color: Colors.black87),
-              )
-            : InteractiveViewer(
-                panEnabled: true,
-                scaleEnabled: true,
-                minScale: 0.5,
-                maxScale: 4.0,
-                child: FittedBox(
-                  child: SizedBox(
-                    width: _uiImage?.width.toDouble() ?? 300,
-                    height: _uiImage?.height.toDouble() ?? 300,
-                    child: CustomPaint(
-                      painter: ImagePainter(_uiImage!, _boxes),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          )
+        : Column(
+            children: [
+              Expanded(
+                child: InteractiveViewer(
+                  panEnabled: true,
+                  scaleEnabled: true,
+                  minScale: 0.5,
+                  maxScale: 4.0,
+                  child: FittedBox(
+                    child: SizedBox(
+                      width: _uiImage?.width.toDouble() ?? 300,
+                      height: _uiImage?.height.toDouble() ?? 300,
+                      child: CustomPaint(
+                        painter: ImagePainter(_uiImage!, _boxes),
+                      ),
                     ),
                   ),
                 ),
               ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _pickImage,
-        child: const Icon(Icons.camera_alt, color: Colors.white),
-      ),
+              const Divider(height: 1),
+              if (_boxes.isNotEmpty)
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: _boxes.length,
+                    itemBuilder: (context, index) {
+                      final box = _boxes[index];
+                      return ListTile(
+                        leading: Icon(Icons.warning_amber, color: Colors.orange.shade800),
+                        title: Text(box.label),
+                        subtitle: Text('Confiança: ${(box.confidence).toStringAsFixed(1)}%'),
+                      );
+                    },
+                  ),
+                )
+              else
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text('Nenhum defeito detectado.'),
+                ),
+            ],
+          ),
+            floatingActionButton: FloatingActionButton(
+            onPressed: _pickImage,
+            child: const Icon(Icons.add_a_photo, color: Colors.white),
+          ),
     );
   }
 }

@@ -1,16 +1,139 @@
-# detector_defeitos_paes
 
-A new Flutter project.
+# 🥖 Detector de Defeitos em Pães
 
-## Getting Started
+Este projeto utiliza **YOLOv8**, **FastAPI** e **Flutter** para detectar defeitos em pães por meio de imagens. A aplicação é composta por uma **API Python** com um modelo de visão computacional e um **app Flutter** que permite capturar a imagem do pão e visualizar os defeitos detectados.
 
-This project is a starting point for a Flutter application.
+---
 
-A few resources to get you started if this is your first Flutter project:
+## 🔍 Funcionalidades
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- 📷 Tirar foto de um pão pelo app Flutter
+- 🧠 Enviar a imagem para uma API com modelo YOLOv8 treinado
+- 📦 Detectar e classificar defeitos como:
+  - buraco
+  - contaminado
+  - queimado
+  - mofo
+  - pão (normal)
+- 🖼️ Exibir resultados com marcações visuais e informações de confiança
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+---
+
+## 🧠 Modelo YOLOv8
+
+O modelo YOLOv8 foi treinado usando imagens anotadas de pães com defeitos. Ele é carregado na API com o caminho:
+
+```python
+model = YOLO("runs/detect/defeitos_paes_v2/weights/best.pt")
+```
+
+Cada classe possui um **limiar mínimo de confiança personalizada** para reduzir falsos positivos:
+
+```python
+class_thresholds = {
+  "pao": 0.5,
+  "buraco": 0.3,
+  "contaminado": 0.3,
+  "queimado": 0.4,
+  "amassado": 0.4,
+  "mofo": 0.4,
+  "rachadura": 0.4,
+}
+```
+
+---
+
+## 🚀 Como executar a API
+
+### 1. Clone o projeto
+
+```bash
+git clone https://github.com/MilenaRickliS/detector_defeitos_paes.git
+cd detector_defeitos_paes
+```
+
+### 2. Crie o ambiente e instale as dependências
+
+```bash
+python -m venv venv
+source venv/bin/activate  # Linux/macOS
+venv\Scripts\activate     # Windows
+
+pip install -r requirements.txt
+```
+
+(Adicione um `requirements.txt` com: `fastapi`, `uvicorn`, `pillow`, `ultralytics`, `python-multipart`)
+
+### 3. Inicie o servidor
+
+```bash
+uvicorn ia_detectar:app --reload --host 0.0.0.0 --port 8000
+```
+
+Acesse a documentação Swagger: [http://localhost:8000/docs](http://localhost:8000/docs)
+
+---
+
+## 📲 Aplicativo Flutter
+
+O app Flutter permite:
+
+- Capturar uma imagem com a câmera
+- Corrigir orientação da imagem
+- Enviar a imagem para a API `/detect`
+- Exibir a imagem com bounding boxes e lista de defeitos detectados
+
+### Dependências principais no `pubspec.yaml`:
+
+```yaml
+dependencies:
+  flutter:
+    sdk: flutter
+  image_picker: ^1.1.2
+  http: ^1.4.0
+  flutter_exif_rotation: ^0.5.2
+```
+
+---
+
+## 🔗 Estrutura do Projeto
+
+```
+detector_defeitos_paes/
+├── ia_detectar.py                   # API FastAPI com YOLOv8
+├── runs/detect/defeitos_paes_v2/    # Pesos do modelo YOLOv8 (.pt)
+├── assets/icons/                    # Ícone do app Flutter
+└── lib/                             # Código Flutter
+```
+
+---
+
+## 📦 Exemplo de resposta da API
+
+```json
+[
+  {
+    "x": 120.0,
+    "y": 85.0,
+    "width": 60.0,
+    "height": 45.0,
+    "label": "mofo",
+    "confidence": 91.2
+  },
+  {
+    "x": 200.0,
+    "y": 100.0,
+    "width": 55.0,
+    "height": 50.0,
+    "label": "queimado",
+    "confidence": 87.5
+  }
+]
+```
+
+---
+
+## 🙋‍♀️ Desenvolvedora
+
+**Milena Rickli Silvério Kriger**  
+🔗 [GitHub](https://github.com/MilenaRickliS/detector_defeitos_paes.git)
