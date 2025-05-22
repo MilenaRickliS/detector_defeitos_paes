@@ -57,6 +57,7 @@ uvicorn ia_detectar:app --reload --host 0.0.0.0 --port 8000
 ### 4. Rode o flutter
 
 ```bash
+flutter pub get
 flutter run
 ```
 
