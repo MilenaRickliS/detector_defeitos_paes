@@ -38,7 +38,7 @@ async def detect_defects(image: UploadFile = File(...)):
         "buraco": 0.3,
         "contaminado": 0.3,
         "queimado": 0.4,
-        "mofo": 0.4,
+        "mofo": 0.3,
     }
 
 
