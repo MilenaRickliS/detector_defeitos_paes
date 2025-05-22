@@ -27,21 +27,7 @@ O modelo YOLOv8 foi treinado usando imagens anotadas de pães com defeitos. Ele 
 model = YOLO("runs/detect/defeitos_paes_v3/weights/best.pt")
 ```
 
-Cada classe possui um **limiar mínimo de confiança personalizada** para reduzir falsos positivos:
-
-```python
-class_thresholds = {
-  "pao": 0.5,
-  "buraco": 0.3,
-  "contaminado": 0.3,
-  "queimado": 0.4,
-  "mofo": 0.4,
-}
-```
-
----
-
-## 🚀 Como executar a API
+## 🚀 Como executar o projeto
 
 ### 1. Clone o projeto
 
@@ -66,6 +52,12 @@ pip install -r requirements.txt
 
 ```bash
 uvicorn ia_detectar:app --reload --host 0.0.0.0 --port 8000
+```
+
+### 4. Rode o flutter
+
+```bash
+flutter run
 ```
 
 ---
@@ -102,25 +94,32 @@ flutter:
   assets:
     - assets/icons/
 ```
+---
+## 📦 API
+
+- Desenvolvida com FastAPI
+- Utiliza o modelo YOLOv8 (You Only Look Once v8)
+- Rota principal: POST /detect
+- Responsável por:
+  - Receber a imagem 
+  - Rodar detecção
+  - Filtrar os resultados com base na confiança mínima por classe
+  - Retornar JSON com as detecções 
 
 ---
+Cada classe possui um **limiar mínimo de confiança personalizada** para reduzir falsos positivos:
 
-## 🔗 Estrutura do Projeto
-
+```python
+class_thresholds = {
+  "pao": 0.5,
+  "buraco": 0.3,
+  "contaminado": 0.3,
+  "queimado": 0.4,
+  "mofo": 0.3,
+}
 ```
-detector_defeitos_paes/
-├── ia/ia_detectar.py                # API FastAPI com YOLOv8
-├── ia/dataset                       # Pasta com imagens e labels
-├── runs/detect/defeitos_paes_v3/    # Pesos do modelo YOLOv8 (.pt)
-├── assets/icons/                    # Ícone do app Flutter
-└── lib/                             # Código Flutter
-```
 
----
-
-## 📦 Exemplo de resposta da API
-
-```json
+```Exemplo de resposta JSON
 [
   {
     "x": 120.0,
@@ -139,6 +138,19 @@ detector_defeitos_paes/
     "confidence": 87.5
   }
 ]
+```
+---
+
+## 🔗 Estrutura do Projeto
+
+```
+detector_defeitos_paes/
+├── ia/
+│   ├── ia_detectar.py                 # API com FastAPI e YOLOv8
+│   ├── dataset/                       # Pasta com imagens e labels
+│   └── runs/detect/defeitos_paes_v3/  # Pesos do modelo YOLOv8 (.pt)
+├── assets/icons/                      # Ícone do app Flutter
+└── lib/                               # Código Flutter
 ```
 
 ---
