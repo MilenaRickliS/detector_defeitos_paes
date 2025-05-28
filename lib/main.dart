@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image_picker_web/image_picker_web.dart';
 import 'package:detector_defeitos_paes/model/boundingbox.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter_exif_rotation/flutter_exif_rotation.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:typed_data';
+
 
 void main() => runApp(const MyApp());
 
@@ -42,8 +46,16 @@ class DetectorPageState extends State<DetectorPage> {
   List<BoundingBox> _boxes = [];
   ui.Image? _uiImage;
   final ImagePicker _picker = ImagePicker();
+  Uint8List? _webImageBytes;
+  String? _webImageName;
 
   Future<void> _pickImage() async {
+    if (kIsWeb) {
+      await _pickImageWeb();
+      return;
+    }
+
+
     showModalBottomSheet(
       context: context,
       builder: (context) {
@@ -71,6 +83,21 @@ class DetectorPageState extends State<DetectorPage> {
         );
       },
     );
+  }
+
+  Future<void> _pickImageWeb() async {
+    final bytesFromPicker = await ImagePickerWeb.getImageAsBytes();
+    final name = await ImagePickerWeb.getImageAsFileName();
+
+    if (bytesFromPicker != null && name != null) {
+      _webImageBytes = bytesFromPicker;
+      _webImageName = name;
+      _uiImage = await decodeImageFromList(_webImageBytes!);
+      _boxes = [];
+
+      setState(() {});
+      await _sendImageToAPIWeb(_webImageBytes!, _webImageName!);
+    }
   }
 
   Future<void> _getImage(ImageSource source) async {
@@ -114,6 +141,29 @@ class DetectorPageState extends State<DetectorPage> {
       }
     } catch (e) {
       _showError('Erro de conexão com a API.\nDetalhes: $e');
+    }
+  }
+
+  Future<void> _sendImageToAPIWeb(Uint8List imageBytes, String filename) async {
+    try {
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('http://192.168.0.5:8000/detect'),
+      );
+      request.files.add(http.MultipartFile.fromBytes('image', imageBytes, filename: filename));
+      var response = await request.send();
+
+      if (response.statusCode == 200) {
+        var respStr = await response.stream.bytesToString();
+        var jsonResp = json.decode(respStr);
+        setState(() {
+          _boxes = (jsonResp as List).map((e) => BoundingBox.fromJson(e)).toList();
+        });
+      } else {
+        _showError('Erro ${response.statusCode}: falha ao processar imagem (web).');
+      }
+    } catch (e) {
+      _showError('Erro de conexão com a API (web).\nDetalhes: $e');
     }
   }
 
@@ -163,9 +213,9 @@ void _showError(String message) {
                     child: SizedBox(
                       width: _uiImage?.width.toDouble() ?? 300,
                       height: _uiImage?.height.toDouble() ?? 300,
-                      child: CustomPaint(
-                        painter: ImagePainter(_uiImage!, _boxes),
-                      ),
+                      child: _uiImage != null
+                        ? CustomPaint(painter: ImagePainter(_uiImage!, _boxes))
+                        : const SizedBox.shrink(),
                     ),
                   ),
                 ),

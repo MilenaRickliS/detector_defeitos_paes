@@ -33,20 +33,18 @@ model = YOLO("runs/detect/defeitos_paes_v3/weights/best.pt")
 
 ```bash
 git clone https://github.com/MilenaRickliS/detector_defeitos_paes.git
-cd detector_defeitos_paes
 ```
 
 ### 2. Crie o ambiente e instale as dependências
 
 ```bash
+cd ia
 python -m venv venv
 source venv/bin/activate  # Linux/macOS
 venv\Scripts\activate     # Windows
 
 pip install -r requirements.txt
 ```
-
-(Adicione um `requirements.txt` com: `fastapi`, `uvicorn`, `pillow`, `ultralytics`, `python-multipart`)
 
 ### 3. Inicie o servidor
 
@@ -57,8 +55,15 @@ uvicorn ia_detectar:app --reload --host 0.0.0.0 --port 8000
 ### 4. Rode o flutter
 
 ```bash
+cd lib
 flutter pub get
 flutter run
+```
+
+### 5. Atualize o IP no main.dart
+
+```bash
+Uri.parse('http://<SEU-IP-AQUI>:8000/detect') (linha 101)
 ```
 
 ---
