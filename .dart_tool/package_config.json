@@ -236,12 +236,6 @@
       "languageVersion": "3.4"
     },
     {
-      "name": "image_picker_web",
-      "rootUri": "file:///C:/Users/Usuario/AppData/Local/Pub/Cache/hosted/pub.dev/image_picker_web-4.0.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.0"
-    },
-    {
       "name": "image_picker_windows",
       "rootUri": "file:///C:/Users/Usuario/AppData/Local/Pub/Cache/hosted/pub.dev/image_picker_windows-0.2.1+1",
       "packageUri": "lib/",
@@ -416,7 +410,7 @@
       "languageVersion": "3.7"
     }
   ],
-  "generated": "2025-05-28T19:27:00.402312Z",
+  "generated": "2025-05-28T19:36:04.212695Z",
   "generator": "pub",
   "generatorVersion": "3.7.0",
   "flutterRoot": "file:///C:/flutter_windows_3.29.0-stable/flutter",

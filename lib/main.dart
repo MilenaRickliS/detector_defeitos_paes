@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:image_picker_web/image_picker_web.dart';
 import 'package:detector_defeitos_paes/model/boundingbox.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -8,8 +7,12 @@ import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter_exif_rotation/flutter_exif_rotation.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:typed_data';
+import 'package:flutter/services.dart' show rootBundle;
+import 'dart:typed_data'; 
+import 'package:http_parser/http_parser.dart';
 
+
+import 'dart:html' as html;
 
 void main() => runApp(const MyApp());
 
@@ -46,16 +49,33 @@ class DetectorPageState extends State<DetectorPage> {
   List<BoundingBox> _boxes = [];
   ui.Image? _uiImage;
   final ImagePicker _picker = ImagePicker();
-  Uint8List? _webImageBytes;
-  String? _webImageName;
+
+Future<void> _pickImageWeb() async {
+  final uploadInput = html.FileUploadInputElement()..accept = 'image/*';
+  uploadInput.click();
+
+  uploadInput.onChange.listen((event) async {
+    final file = uploadInput.files?.first;
+    if (file != null) {
+      final reader = html.FileReader();
+      reader.readAsArrayBuffer(file);
+
+      await reader.onLoad.first;
+      final data = reader.result as Uint8List;
+
+      _uiImage = await decodeImageFromList(data);
+      setState(() {});
+      await _sendImageToAPIWeb(data, file.name);
+    }
+  });
+}
+
+
 
   Future<void> _pickImage() async {
-    if (kIsWeb) {
-      await _pickImageWeb();
-      return;
-    }
-
-
+  if (kIsWeb) {
+    await _pickImageWeb();
+  } else {
     showModalBottomSheet(
       context: context,
       builder: (context) {
@@ -84,21 +104,7 @@ class DetectorPageState extends State<DetectorPage> {
       },
     );
   }
-
-  Future<void> _pickImageWeb() async {
-    final bytesFromPicker = await ImagePickerWeb.getImageAsBytes();
-    final name = await ImagePickerWeb.getImageAsFileName();
-
-    if (bytesFromPicker != null && name != null) {
-      _webImageBytes = bytesFromPicker;
-      _webImageName = name;
-      _uiImage = await decodeImageFromList(_webImageBytes!);
-      _boxes = [];
-
-      setState(() {});
-      await _sendImageToAPIWeb(_webImageBytes!, _webImageName!);
-    }
-  }
+}
 
   Future<void> _getImage(ImageSource source) async {
     final picked = await _picker.pickImage(source: source);
@@ -125,7 +131,7 @@ class DetectorPageState extends State<DetectorPage> {
     try {
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse('http://192.168.0.5:8000/detect'),
+        Uri.parse('http://192.168.0.6:8000/detect'),
       );
       request.files.add(await http.MultipartFile.fromPath('image', imageFile.path));
       var response = await request.send();
@@ -144,28 +150,36 @@ class DetectorPageState extends State<DetectorPage> {
     }
   }
 
-  Future<void> _sendImageToAPIWeb(Uint8List imageBytes, String filename) async {
-    try {
-      var request = http.MultipartRequest(
-        'POST',
-        Uri.parse('http://192.168.0.5:8000/detect'),
-      );
-      request.files.add(http.MultipartFile.fromBytes('image', imageBytes, filename: filename));
-      var response = await request.send();
+  Future<void> _sendImageToAPIWeb(Uint8List bytes, String filename) async {
+  try {
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse('http://192.168.0.6:8000/detect'),
+    );
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        'image',
+        bytes,
+        filename: filename,
+        contentType: MediaType('image', 'jpeg'), 
+      ),
+    );
 
-      if (response.statusCode == 200) {
-        var respStr = await response.stream.bytesToString();
-        var jsonResp = json.decode(respStr);
-        setState(() {
-          _boxes = (jsonResp as List).map((e) => BoundingBox.fromJson(e)).toList();
-        });
-      } else {
-        _showError('Erro ${response.statusCode}: falha ao processar imagem (web).');
-      }
-    } catch (e) {
-      _showError('Erro de conexão com a API (web).\nDetalhes: $e');
+    var response = await request.send();
+    if (response.statusCode == 200) {
+      var respStr = await response.stream.bytesToString();
+      var jsonResp = json.decode(respStr);
+      setState(() {
+        _boxes = (jsonResp as List).map((e) => BoundingBox.fromJson(e)).toList();
+      });
+    } else {
+      _showError('Erro ${response.statusCode}: falha ao processar imagem.');
     }
+  } catch (e) {
+    _showError('Erro ao enviar imagem no Web: $e');
   }
+}
+
 
 void _showError(String message) {
   ScaffoldMessenger.of(context).showSnackBar(
@@ -190,7 +204,7 @@ void _showError(String message) {
         ),
         centerTitle: true,
       ),
-      body: _imageFile == null
+      body: _uiImage == null
         ? const Center(
             child: Padding(
               padding: EdgeInsets.all(16.0), 
@@ -213,9 +227,9 @@ void _showError(String message) {
                     child: SizedBox(
                       width: _uiImage?.width.toDouble() ?? 300,
                       height: _uiImage?.height.toDouble() ?? 300,
-                      child: _uiImage != null
-                        ? CustomPaint(painter: ImagePainter(_uiImage!, _boxes))
-                        : const SizedBox.shrink(),
+                      child: CustomPaint(
+                        painter: ImagePainter(_uiImage!, _boxes),
+                      ),
                     ),
                   ),
                 ),
