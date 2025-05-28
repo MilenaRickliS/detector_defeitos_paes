@@ -7,7 +7,7 @@ Este projeto utiliza **YOLOv8**, **FastAPI** e **Flutter** para detectar defeito
 
 ## 🔍 Funcionalidades
 
-- 📷 Tirar foto de um pão ou buscar na galeria pelo app Flutter
+- 📷 Tirar foto de um pão ou buscar na galeria pelo app Flutter (Android e Web)
 - 🧠 Enviar a imagem para uma API com modelo YOLOv8 treinado
 - 📦 Detectar e classificar defeitos como:
   - buraco
@@ -63,7 +63,8 @@ flutter run
 ### 5. Atualize o IP no main.dart
 
 ```bash
-Uri.parse('http://<SEU-IP-AQUI>:8000/detect') (linha 101)
+Uri.parse('http://<SEU-IP-AQUI>:8000/detect') (linha 134)
+Uri.parse('http://<SEU-IP-AQUI>:8000/detect') (linha 157)
 ```
 
 ---
