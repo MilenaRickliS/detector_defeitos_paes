@@ -78,21 +78,17 @@ class _UnifiedDetectorPageState extends State<UnifiedDetectorPage> {
     if (pickedFile == null) return;
 
     final originalBytes = await pickedFile.readAsBytes();
-
-    // 🛠 Corrigir rotação da imagem
+    
     img.Image? decoded = img.decodeImage(originalBytes);
     if (decoded == null) {
       _showError('Erro ao decodificar imagem');
       return;
     }
-
-    // Aplica correção da orientação EXIF (especialmente importante para câmera)
+    
     img.Image fixed = img.bakeOrientation(decoded);
-
-    // Converte imagem corrigida para bytes (JPG)
+    
     final fixedBytes = Uint8List.fromList(img.encodeJpg(fixed));
 
-    // Converte para ui.Image para desenhar no canvas
     final uiImage = await bytesToUiImage(fixedBytes);
 
     setState(() {
@@ -100,7 +96,6 @@ class _UnifiedDetectorPageState extends State<UnifiedDetectorPage> {
       _boundingBoxes = [];
     });
 
-    // Envia a imagem corrigida para o servidor
     final request = http.MultipartRequest(
       'POST',
       Uri.parse('http://192.168.0.6:8000/detect'),

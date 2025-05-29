@@ -60,11 +60,10 @@ flutter pub get
 flutter run
 ```
 
-### 5. Atualize o IP no main.dart
+### 5. Atualize o IP no detector.dart
 
 ```bash
-Uri.parse('http://<SEU-IP-AQUI>:8000/detect') (linha 134)
-Uri.parse('http://<SEU-IP-AQUI>:8000/detect') (linha 157)
+Uri.parse('http://<SEU-IP-AQUI>:8000/detect') (linha 101)
 ```
 
 ---
@@ -84,9 +83,13 @@ O app Flutter permite:
 dependencies:
   flutter:
     sdk: flutter
-  image_picker: ^1.1.2
   http: ^1.4.0
-  flutter_exif_rotation: ^0.5.2
+  http_parser: ^4.1.2
+  image: ^4.5.4
+  path: ^1.9.1
+  path_provider: ^2.1.5
+  universal_io: ^2.2.2
+  image_picker: ^1.1.2
   cupertino_icons: ^1.0.8
 
 dev_dependencies:
