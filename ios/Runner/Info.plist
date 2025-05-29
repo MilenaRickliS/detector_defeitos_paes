@@ -48,6 +48,11 @@
 		<key>UIStatusBarHidden</key>
 		<true/>
 		<key>UIViewControllerBasedStatusBarAppearance</key>
+		<key>NSCameraUsageDescription</key>
+		<string>Este app precisa acessar a câmera para tirar fotos.</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>Este app precisa acessar a galeria para escolher fotos.</string>
+
 		<false/>
 	</dict>
 </plist>
